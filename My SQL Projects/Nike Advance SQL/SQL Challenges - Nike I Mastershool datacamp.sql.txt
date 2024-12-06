@@ -1,0 +1,152 @@
+-- SQL Challenges - Nike I Mastershool datacamp --
+
+-- Question #1: 
+	-- Create a list that includes the order ID, order item ID, product name, and sales price for the Nike Official order items in a single view.
+
+SELECT
+	order_items.order_id,
+  order_items.order_item_id,
+	products.product_name,
+  order_items.sale_price
+  
+FROM order_items
+JOIN products ON order_items.product_id = products.product_id
+;
+
+-- Question #2: 
+	-- What are the products that are distributed from Los Angeles? Include the product ID and product name in your result.	
+  
+SELECT
+	products.product_id,
+	products.product_name,
+ 	distribution_centers.name
+  
+FROM products
+JOIN distribution_centers ON products.distribution_center_id = distribution_centers.distribution_center_id 
+WHERE distribution_centers.name = 'Los Angeles CA'
+;
+
+SELECT -- reduce the script
+    p.product_id,
+    p.product_name,
+    dc.name  -- Alias for distribution_centers.name
+
+FROM products p
+JOIN distribution_centers dc 
+    ON p.distribution_center_id = dc.distribution_center_id
+WHERE dc.name = 'Los Angeles CA'
+;
+
+
+-- Question #3: 
+	-- How many unique order items per status from Nike Official are either returned or cancelled?
+  
+SELECT
+		o.status,
+  	COUNT(oi.order_item_id) AS num_order_items
+FROM orders o
+JOIN order_items oi
+ON oi.order_id = o.order_id
+WHERE o.status = 'Cancelled' or o.status = 'Returned'
+GROUP BY o.status
+;
+
+-- Question #4: 
+	-- Calculate how many order items of Nike Official are associated with each product. Are there any products that never have been sold yet?
+
+
+SELECT 
+    p.product_name,
+    COUNT(oi.order_item_id) AS num_order_items
+FROM products p
+LEFT JOIN order_items oi
+    ON p.product_id = oi.product_id
+GROUP BY p.product_name;
+ -- yes 5 items has not been sold yet--
+
+SELECT 
+    p.product_name,
+    COUNT(oi.order_item_id) AS num_order_items
+FROM products p
+LEFT JOIN order_items oi
+    ON p.product_id = oi.product_id
+GROUP BY p.product_name
+HAVING COUNT(oi.order_item_id) = 0;
+
+
+-- Question #5: 
+	-- Select all the unique product IDs available between the Nike Official order items and the Nike Vintage order items 
+  
+SELECT
+	product_id
+FROM order_items
+
+union DISTINCT
+
+SELECT
+  Product_id
+FROM order_items_vintage
+ORDER BY product_id
+;
+
+-- Question #6: 
+	-- Create a list of all the Nike Official order items where a discount (retail price - sales price) has been given. 
+  	-- Order the table by showing the largest discounts first.
+
+	-- Include the order item ID, product name, retail price, sales price, and discount given.
+  
+SELECT
+		oi.order_item_id,
+    p.product_name,
+    p.retail_price,
+    oi.sale_price,
+    (p.retail_price - oi.sale_price) AS discout_value
+FROM products p 
+JOIN order_items oi
+ON p.product_id = oi.product_id
+WHERE (p.retail_price - oi.sale_price) >0
+ORDER BY discout_value DESC
+;    
+
+-- Question #7: 
+ 	-- Create a summary of how many Nike Official order items have or have no discount applied for each product. Order the result per product name.
+
+	-- What products are discounted more than others?
+
+(SELECT
+    p.product_name,
+    'discount' AS Discount_aplied,
+    COUNT('discount')
+FROM products p 
+JOIN order_items oi
+ON p.product_id = oi.product_id
+WHERE (p.retail_price - oi.sale_price) >0
+GROUP BY p.product_name, Discount_aplied)
+
+UNION ALL
+
+(SELECT
+    p.product_name,
+    'no discount' AS Discount_aplied,
+     COUNT('no discount')
+FROM products p 
+JOIN order_items oi
+ON p.product_id = oi.product_id
+WHERE (p.retail_price - oi.sale_price) =0
+GROUP BY p.product_name, Discount_aplied)
+-- ORDER BY p.product_name DESC "ask alex"
+; 
+
+-- Question #8: 
+	-- Assume that all Nike Official products sold would have been sold at retail value and compare that against the actual sales price. 
+
+	-- What is the total revenue that has been missed out on due to the discounts that have been given?
+  
+SELECT
+    'discount' AS Discount_aplied,
+    SUM(p.retail_price - oi.sale_price) AS discout_total
+FROM products p 
+JOIN order_items oi
+ON p.product_id = oi.product_id
+WHERE (p.retail_price - oi.sale_price) >0
+; 
