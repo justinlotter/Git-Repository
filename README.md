@@ -1,2 +1,2 @@
-# Git-Repository
+# Code storage
 All mastershcool projects
