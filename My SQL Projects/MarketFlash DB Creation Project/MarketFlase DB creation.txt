@@ -1,0 +1,323 @@
+-- Table creation ; By Justin Lötter
+
+
+CREATE TABLE "Campaign_Influencers" (
+    "Campaign_Influ_ID" VARCHAR(20),
+    "Campaign_ID" VARCHAR(20),
+    "Influencer_ID" VARCHAR(20),
+    PRIMARY KEY ("Campaign_Influ_ID"),
+    FOREIGN KEY ("Campaign_ID") REFERENCES "Campaigns" ("Campaign_ID"),
+    FOREIGN KEY ("Influencer_ID") REFERENCES "Influencers" ("Influencer_ID")
+);
+
+CREATE TABLE "Campaign_Platforms" (
+    "Campaign_Platf_ID" VARCHAR(20),
+    "Campaign_ID" VARCHAR(20),
+    "Platform_ID" VARCHAR(20),
+    PRIMARY KEY ("Campaign_Platf_ID"),
+    FOREIGN KEY ("Campaign_ID") REFERENCES "Campaigns" ("Campaign_ID"),
+    FOREIGN KEY ("Platform_ID") REFERENCES "Platforms" ("Platform_ID")
+);
+
+CREATE TABLE "Campaign_Employees" (
+    "Campaign_Emp_ID" VARCHAR(20),
+    "Campaign_ID" VARCHAR(20),
+    "Employee_ID" VARCHAR(20),
+    PRIMARY KEY ("Campaign_Emp_ID"),
+    FOREIGN KEY ("Campaign_ID") REFERENCES "Campaigns" ("Campaign_ID"),
+    FOREIGN KEY ("Employee_ID") REFERENCES "Employees" ("Employee_ID")
+);
+
+CREATE TABLE "Influencers" (
+    "Influencer_ID" VARCHAR(20),
+    "Influencer_Name" VARCHAR(50),
+    "Social_Handle" VARCHAR(50),
+    "Follower_Count" NUMERIC,
+    "Contact_Details" VARCHAR(20),
+    PRIMARY KEY ("Influencer_ID")
+);
+
+CREATE TABLE "Payments" (
+    "Payment_ID" VARCHAR(20),
+    "Date" DATE,
+    "Amount" FLOAT,
+    "Payment_Type" VARCHAR(20),
+    "Payment_Details" VARCHAR(20),
+    PRIMARY KEY ("Payment_ID")
+);
+
+CREATE TABLE "Advertisements" (
+    "Ad_ID" VARCHAR(20),
+    "Advertisement_Name" VARCHAR(50),
+    "Type" VARCHAR(20),
+    "Duration" VARCHAR(20),
+    "Budget" FLOAT,
+  	"Platform_ID" VARCHAR(20),
+    PRIMARY KEY ("Ad_ID"),
+  	FOREIGN KEY ("Platform_ID") REFERENCES "Platforms" ("Platform_ID")
+  	
+);
+
+CREATE TABLE "Campaigns" (
+    "Campaign_ID" VARCHAR(20),
+    "Campaign_Name" VARCHAR(50),
+    "Start_Date" DATE,
+    "End_Date" DATE,
+    "Budget" NUMERIC,
+    "Campaign_Platf_ID" VARCHAR(20),
+    "Content_ID" VARCHAR(20),
+    "Client_ID" VARCHAR(20),
+    "Campaign_Influ_ID" VARCHAR(20),
+    "Payment_ID" VARCHAR(20),
+    "Metric_ID" VARCHAR(20),
+    "Ad_ID" VARCHAR(20),
+    "Campaign_Emp_ID" VARCHAR(20),
+    PRIMARY KEY ("Campaign_ID"),
+    FOREIGN KEY ("Content_ID") REFERENCES "Contents" ("Content_ID"),
+ 		FOREIGN KEY ("Client_ID") REFERENCES "Clients" ("Client_ID"),
+    FOREIGN KEY ("Payment_ID") REFERENCES "Payments" ("Payment_ID"),
+    FOREIGN KEY ("Metric_ID") REFERENCES "Metrics" ("Metric_ID"),
+    FOREIGN KEY ("Ad_ID") REFERENCES "Advertisements" ("Ad_ID")
+);
+
+CREATE TABLE "Platforms" (
+    "Platform_ID" VARCHAR(20),
+    "Platform_Name" VARCHAR(50),
+    "URL" VARCHAR(50),
+    "Contact_Person" VARCHAR(20),
+    "Contact_Phone" VARCHAR(20),
+    "Contact_Email" VARCHAR(50),
+    PRIMARY KEY ("Platform_ID")
+);
+
+CREATE TABLE "Employees" (
+    "Employee_ID" VARCHAR(20),
+    "Employee_Name" VARCHAR(50),
+    "Job_Role" VARCHAR(50),
+    "Contact_Info" VARCHAR(20),
+    "Department_ID" VARCHAR(20),
+    "Employee_Since" DATE,
+    PRIMARY KEY ("Employee_ID")
+);
+
+CREATE TABLE "Clients" (
+    "Client_ID" VARCHAR(20),
+    "Client_Name" VARCHAR(50),
+    "Contact_Details" VARCHAR(20),
+    "Industry" VARCHAR(50),
+    "Contract_Start_Date" DATE,
+    "Contract_End_Date" DATE,
+    PRIMARY KEY ("Client_ID")
+);
+
+CREATE TABLE "Contents" (
+    "Content_ID" VARCHAR(20),
+    "Title" VARCHAR(50),
+    "Description" TEXT,
+    "Media_Type" VARCHAR(20),
+    "Creation_Date" DATE,
+    PRIMARY KEY ("Content_ID")
+);
+
+CREATE TABLE "Metrics" (
+    "Metric_ID" VARCHAR(20),
+    "Impressions" NUMERIC,
+    "Clicks" NUMERIC,
+    "Engagement" FLOAT,
+    "Conversion_Rate" FLOAT,
+    PRIMARY KEY ("Metric_ID")
+);
+
+ 
+-- Table population -- 
+
+-- Populating "Employees"
+INSERT INTO "Employees" ("Employee_ID", "Employee_Name", "Job_Role", "Contact_Info", "Department_ID", "Employee_Since")
+VALUES 
+('E001', 'Alice Johnson', 'Marketing Manager', 'alice@company.com', 'D001', '2015-06-15'),
+('E002', 'Bob Williams', 'Social Media Specialist', 'bob@company.com', 'D002', '2018-03-10');
+
+-- Populating "Clients" 
+INSERT INTO "Clients" ("Client_ID", "Client_Name", "Contact_Details", "Industry", "Contract_Start_Date", "Contract_End_Date")
+VALUES 
+('CL001', 'Fluidra Corp', 'info@fluidra.com', 'Retail', '2024-12-01', '2025-11-30'),
+('CL002', 'SLS Ltd', 'contact@slsltd.com', 'Tech', '2024-11-01', '2025-10-31');
+
+-- Populating "Platforms"
+INSERT INTO "Platforms" ("Platform_ID", "Platform_Name", "URL", "Contact_Person", "Contact_Phone", "Contact_Email")
+VALUES 
+('P001', 'Facebook', 'http://facebook.com', 'Jack Raifer', '103-230-7890', 'jack@facebook.com'),
+('P002', 'Instagram', 'http://instagram.com', 'Alex Schnaider', '320-456-3210', 'alex@instagram.com');
+
+-- Populating "Contents" 
+INSERT INTO "Contents" ("Content_ID", "Title", "Description", "Media_Type", "Creation_Date")
+VALUES 
+('CON001', 'Samsung Sale Content', 'Promotional content for cellphone sale', 'Video', '2024-12-15'),
+('CON002', 'Nidentdo Promo Content', 'Ad material for gaming campaign', 'Image', '2025-02-20');
+
+-- Populating "Influencers" 
+INSERT INTO "Influencers" ("Influencer_ID", "Influencer_Name", "Social_Handle", "Follower_Count", "Contact_Details")
+VALUES 
+('I001', 'Justin Lötter', '@Jlotter', 371, '123-456-7890'),
+('I002', 'Joey Meiring', '@jmeiring', 21, '987-654-3210');
+
+-- Populating "Payments" 
+INSERT INTO "Payments" ("Payment_ID", "Date", "Amount", "Payment_Type", "Payment_Details")
+VALUES 
+('P001', '2025-01-09', 1011.00, 'Credit Card', 'Card Ending 0317'),
+('P002', '2025-01-10', 2022.00, 'Bank Transfer', 'Account 5678');
+
+-- Populating "Advertisements" (no dependencies)
+INSERT INTO "Advertisements" ("Ad_ID", "Advertisement_Name", "Type", "Duration", "Budget")
+VALUES 
+('A001', 'Samsung Sale Ad', 'Video', '30s', 15000.00),
+('A002', 'Nidentdo Promo Ad', 'Image', '15s', 13000.00);
+
+-- Populating "Metrics" (no dependencies)
+INSERT INTO "Metrics" ("Metric_ID", "Impressions", "Clicks", "Engagement", "Conversion_Rate")
+VALUES 
+('M001', 100000, 5000, 4.5, 2.0),
+('M002', 150000, 7500, 5.0, 3.5);
+
+-- Populating "Campaigns" 
+INSERT INTO "Campaigns" (
+    "Campaign_ID", "Campaign_Name", "Start_Date", "End_Date", "Budget", 
+    "Campaign_Platf_ID", "Content_ID", "Client_ID", "Campaign_Influ_ID", 
+    "Payment_ID", "Metric_ID", "Ad_ID", "Campaign_Emp_ID")
+VALUES 
+('C001', 'Samsung Sale', '2025-01-01', '2025-02-01', 10000.00, 
+ 'CP001', 'CON001', 'CL001', 'CI001', 'P001', 'M001', 'A001', 'CE001'),
+('C002', 'Nidentdo Promo', '2025-03-01', '2025-04-01', 15000.00, 
+ 'CP002', 'CON002', 'CL002', 'CI002', 'P002', 'M002', 'A002', 'CE002');
+
+-- Populating "Campaign_Platforms" 
+INSERT INTO "Campaign_Platforms" ("Campaign_Platf_ID", "Campaign_ID", "Platform_ID")
+VALUES 
+('CP001', 'C001', 'P001'),
+('CP002', 'C002', 'P002');
+
+-- Populating "Campaign_Employees"
+INSERT INTO "Campaign_Employees" ("Campaign_Emp_ID", "Campaign_ID", "Employee_ID")
+VALUES 
+('CE001', 'C001', 'E001'),
+('CE002', 'C002', 'E002');
+
+-- Populating "Campaign_Influencers"
+INSERT INTO "Campaign_Influencers" ("Campaign_Influ_ID", "Campaign_ID", "Influencer_ID")
+VALUES 
+('CI001', 'C001', 'I001'),
+('CI002', 'C002', 'I002');
+
+-- Join Test--
+
+-- Test 1: Join Campaigns with Clients and Payments
+SELECT
+    c.Campaign_Name, 
+    c.Budget,
+    cl.Client_Name, 
+    p.Amount, 
+    p.Payment_Type, 
+    p.Payment_Details
+FROM Campaigns c
+JOIN Clients cl ON c.Client_ID = cl.Client_ID
+JOIN Payments p ON c.Payment_ID = p.Payment_ID
+;
+
+-- Test 2: Join Campaigns with Advertisements and Platforms
+SELECT 
+    c.Campaign_Name, 
+    a.Advertisement_Name, 
+    a.Type, 
+    a.Duration, 
+    a.Budget,
+    pl.Platform_Name, 
+    pl.Contact_Person
+FROM Campaigns c
+JOIN Advertisements a ON c.Ad_ID = a.Ad_ID
+JOIN Platforms pl ON a.Platform_ID = pl.Platform_ID
+;
+
+-- Test 3: Join Campaign_Influencers with Campaigns and Influencers to get influencer details for campaigns
+SELECT 
+    ci.Campaign_Influ_ID, 
+    ci.Campaign_ID, 
+    c.Campaign_Name,
+    i.Influencer_Name, 
+    i.Social_Handle, 
+    i.Follower_Count
+FROM Campaign_Influencers ci
+JOIN Campaigns c ON ci.Campaign_ID = c.Campaign_ID
+JOIN Influencers i ON ci.Influencer_ID = i.Influencer_ID;
+
+-- Test 4: Join Campaigns, Metrics and Advertisements
+SELECT 
+    c.Campaign_ID, 
+    c.Campaign_Name, 
+    m.Impressions, 
+    m.Clicks, 
+    m.Engagement, 
+    m.Conversion_Rate, 
+    a.Advertisement_Name, 
+    a.Type
+FROM Campaigns c
+JOIN Metrics m ON c.Metric_ID = m.Metric_ID
+JOIN Advertisements a ON c.Ad_ID = a.Ad_ID;
+
+-- Test 5: Join Campaign_Platforms with Campaigns and Platforms
+SELECT 
+    cp.Campaign_Platf_ID, 
+    cp.Campaign_ID, 
+    c.Campaign_Name, 
+    pl.Platform_Name, 
+    pl.URL
+FROM Campaign_Platforms cp
+JOIN Campaigns c ON cp.Campaign_ID = c.Campaign_ID
+JOIN Platforms pl ON cp.Platform_ID = pl.Platform_ID;
+
+-- Test 6: Join Campaigns with Contents and Clients
+SELECT 
+    c.Campaign_ID, 
+    c.Campaign_Name, 
+    con.Title, 
+    con.Description, 
+    con.Media_Type, 
+    cl.Client_Name, 
+    cl.Industry
+FROM Campaigns c
+JOIN Contents con ON c.Content_ID = con.Content_ID
+JOIN Clients cl ON c.Client_ID = cl.Client_ID;
+
+-- Test 7: Join Campaigns with Employees and Influencers
+
+SELECT 
+    c.Campaign_ID, 
+    c.Campaign_Name, 
+    e.Employee_Name, 
+    e.Job_Role, 
+    i.Influencer_Name, 
+    i.Social_Handle
+FROM Campaigns c
+JOIN Campaign_Employees ce ON c.Campaign_ID = ce.Campaign_ID
+JOIN Employees e ON ce.Employee_ID = e.Employee_ID
+JOIN Campaign_Influencers ci ON c.Campaign_ID = ci.Campaign_ID
+JOIN Influencers i ON ci.Influencer_ID = i.Influencer_ID;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
