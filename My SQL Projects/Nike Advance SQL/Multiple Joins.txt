@@ -1,0 +1,240 @@
+--Joining Tables: INNER JOIN-- 
+	--Combing two tables with an INNER JOIN 
+
+SELECT 
+	order_items.order_id, -- specifying table names to remove ambiguity about which table a column belongs to
+	order_items.created_at,
+	order_items.shipped_at,
+	order_items.product_id,
+	products.product_name
+
+FROM 
+	order_items
+INNER JOIN -- we want an INNER JOIN returning records where product_id is in both order_items and products
+	products 
+ON order_items.product_id = products.product_id -- we use the ON keyword to specify join keys
+;
+
+-- Syntax of joins
+
+SELECT 
+	<table_1.column_1> ,
+	<table_1.column_2> 
+
+
+FROM	
+	<table_1>
+_ JOIN -- _ can be replaced with INNER, or any of the other JOIN types (LEFT, RIGHT, FULL)
+	<table_2> 
+	ON <table_1.join_key> = <table_2.join_key>
+
+;
+
+-- Exercise Which products are distributed by which distribution centers? 
+	--Write a query that shows the product name, product ID, and distribution center name for each product.
+  
+SELECT
+	products.product_id,
+  products.product_name,
+  products.distribution_center_id,
+ 	products.distribution_center_id,
+  distribution_centers.name
+  
+  FROM products
+  INNER JOIN distribution_centers
+  ON products.distribution_center_id = distribution_centers.distribution_center_id
+  ; -- my attempt, correct
+  
+SELECT 
+		products.product_name,
+		products.product_id,
+		distribution_centers.name AS distribution_center
+
+FROM 
+	products
+INNER JOIN 
+	distribution_centers 
+ON 
+	products.distribution_center_id = distribution_centers.distribution_center_id
+; -- solution from materschool, note the expected outcome in the quary was not right.
+
+-- Combining two tables using LEFT JOIN
+
+SELECT 
+	order_items.order_id,
+	order_items.created_at,
+	order_items.shipped_at,
+	order_items.product_id,
+	products.product_name
+
+FROM 
+	order_items
+LEFT JOIN -- this returns ALL records from order_items, even if they don't exist in products!
+	products 
+ON order_items.product_id = products.product_id
+;
+
+--Combining two tables using FULL JOIN
+
+SELECT 
+	order_items.order_id,
+	order_items.created_at,
+	order_items.shipped_at,
+	order_items.product_id,
+	products.product_name
+
+FROM 
+	order_items
+FULL JOIN -- FULL OUTER JOIN gives the same result as FULL JOIN
+	products 
+ON order_items.product_id = products.product_id
+;
+
+--Exercise: How many products are distributed by each distribution center? 
+--Ensure to include the name of all distribution centers even if they don’t distribute any products.
+
+SELECT 
+	distribution_centers.name AS distribution_center,
+	count(products.product_id)
+
+FROM 
+	distribution_centers
+FULL JOIN 
+	products 
+ON 
+	distribution_centers.distribution_center_id = products.distribution_center_id
+GROUP BY distribution_center
+;
+    
+ -- Exercise: How many products have a distribution center ID not available in the table?
+
+
+SELECT 
+	COUNT(products.product_id) AS total_products
+
+FROM 
+	products
+LEFT JOIN 
+	distribution_centers 
+ON 
+	products.distribution_center_id = distribution_centers.distribution_center_id
+
+WHERE distribution_centers.distribution_center_id IS NULL
+;
+
+--FULL JOIN also provides the correct answers
+
+
+-- Merging Rows from Multiple Tables Using UNION
+
+-- Combining Rows: UNION -- 
+
+SELECT 
+			order_item_id,
+			 order_id,
+			 product_id,
+			 created_at,
+			 shipped_at,
+			 delivered_at,
+			 returned_at,
+			 sale_price
+
+FROM order_items
+
+UNION ALL -- stack the rows from the query above and the query below!
+
+SELECT order_item_id,
+			 order_id,
+			 product_id,
+			 created_at,
+			 shipped_at,
+			 delivered_at,
+			 returned_at,
+			 sale_price
+
+FROM order_items_vintage
+;
+
+-- Expanding UNION to more than two queries:
+-- For example, you can duplicate the rows from the order_items table in your query result in the following way: 
+
+SELECT * FROM order_items -- query 1
+
+UNION ALL
+
+SELECT * FROM order_items -- query 2
+
+UNION ALL -- we call UNION ALL again between the second and third query
+
+SELECT * FROM order_items -- query 3
+;
+
+-- Q1 Create a list of all order items created after February 1, 2023 from the order_items and order_items_vintage tables combined.
+	-- Include the order item ID, product ID, created date, and sales price in the query result.
+  
+SELECT
+			order_item_id,
+			 product_id,
+			 created_at,
+			 sale_price
+FROM order_items
+WHERE created_at > '2023-02-01'
+
+UNION ALL
+
+SELECT
+			order_item_id,
+			 product_id,
+			 created_at,
+			 sale_price
+FROM order_items_vintage
+WHERE created_at > '2023-02-01'
+;
+
+-- Combing Unique Rows: UNION DISTINCT;
+--Combining unique rows from two different tables
+
+SELECT order_item_id,
+			 order_id,
+			 product_id,
+			 created_at,
+			 shipped_at,
+			 delivered_at,
+			 returned_at,
+			 sale_price
+
+FROM order_items
+
+UNION DISTINCT -- combine all unique rows from the queries above and below
+
+SELECT order_item_id,
+			 order_id,
+			 product_id,
+			 created_at,
+			 shipped_at,
+			 delivered_at,
+			 returned_at,
+			 sale_price
+
+FROM order_items_vintage
+;
+
+-- Excerise: Create a list of unique user IDs (use product ID) that have returned an order item ID (returned date is not null)/
+--Combine the user IDs from both the order_items and order_items_vintage tables.
+    
+SELECT 
+	product_id,
+  returned_at
+  
+FROM order_items
+WHERE returned_at IS NOT NULL
+
+UNION DISTINCT
+
+SELECT 
+	product_id,
+  returned_at
+  
+FROM order_items_vintage
+WHERE returned_at is NOT NULL
+;
