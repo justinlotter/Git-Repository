@@ -1,0 +1,163 @@
+SQL Challenge - Nike II 
+
+-- Question #1: 
+
+-- What is the number of order items by each business unit (Nike Official and Nike Vintage)?
+
+SELECT 
+		'Nike Official' AS Business_unit,
+    COUNT(order_item_id)
+ FROM order_items
+
+UNION 
+
+SELECT
+		'Nike Vintage' AS Business_uit,
+    COUNT(order_item_id)
+FROM order_items_vintage
+;
+
+-- Question #2: 
+
+-- What is the number of order items sold with a discount (sales price being smaller than retail price) by each business unit (Nike Official and Nike Vintage)? 
+	-- What is the total revenue generated from these items?
+
+SELECT
+	'Nike Officail' AS Business_uit,
+    COUNT(order_item_id) AS num_items,
+    SUM(oi.sale_price) AS Total_revenue
+FROM products p 
+JOIN order_items oi
+ON p.product_id = oi.product_id
+WHERE (p.retail_price - oi.sale_price) >0
+GROUP BY Business_uit
+
+UNION
+
+SELECT
+	'Nike Vintage' AS Business_uit,
+    COUNT(order_item_id) AS num_items,
+    SUM(ov.sale_price) AS Total_revenue
+FROM products p 
+JOIN order_items_vintage ov
+ON p.product_id = ov.product_id
+WHERE (p.retail_price - ov.sale_price) >0
+GROUP BY Business_uit
+;
+
+-- Question #3: 
+
+-- For order items sold with a discount (sales price being smaller than retail price) , 
+-- what is the average discount given in $ for each product name and for each business unit (Nike Official and Nike Vintage)?
+
+SELECT
+		'Nike Officail' AS Business_uit,
+		p.product_name,
+    AVG(p.retail_price - oi.sale_price) AS avg_discount
+FROM products p 
+JOIN order_items oi
+ON p.product_id = oi.product_id
+WHERE (p.retail_price - oi.sale_price) >0
+GROUP BY Business_uit, p.product_name
+
+UNION
+
+SELECT
+		'Nike Vintage' AS Business_uit,
+		p.product_name,
+    AVG(p.retail_price - ov.sale_price) AS avg_discount
+FROM products p 
+JOIN order_items_vintage ov
+ON p.product_id = ov.product_id
+WHERE (p.retail_price - ov.sale_price) >0
+GROUP BY Business_uit, p.product_name
+; -- My script - the same answer than mastershool but incorrect join was used?
+
+
+-- alternative options:
+
+SELECT 
+		'Nike Official' AS business_unit,
+		products.product_name,
+		AVG(products.retail_price-order_items.sale_price) AS average_discount
+       
+FROM order_items
+		 LEFT JOIN products ON order_items.product_id = products.product_id
+
+WHERE order_items.sale_price < products.retail_price
+
+GROUP BY products.product_name
+
+
+UNION ALL
+
+
+SELECT 
+		'Nike Vintage' AS business_unit,
+		products.product_name,
+		AVG(products.retail_price-order_items_vintage.sale_price) AS average_discount
+       
+FROM order_items_vintage
+		 LEFT JOIN products ON order_items_vintage.product_id = products.product_id
+
+WHERE order_items_vintage.sale_price < products.retail_price
+
+GROUP BY products.product_name
+;
+
+-- Question #4: 
+
+-- For Nike Vintage, calculate the average profit in $ generated per each of the vintage products.
+
+SELECT
+    	p.product_name,
+   	 avg(ov.sale_price - p.cost) AS avg_profit
+FROM order_items_vintage ov
+JOIN products p
+ON p.product_id = ov.product_id
+GROUP BY p.product_name
+;
+
+-- Question #5: 
+
+-- What product name generated the highest cumulative profit in $ for Nike Vintage in the calendar year 2022 (based on the order created date)?
+
+SELECT
+    p.product_name,
+    SUM(ov.sale_price - p.cost) AS SUM_profit
+FROM order_items_vintage ov
+JOIN products p
+ON p.product_id = ov.product_id
+WHERE ov.created_at BETWEEN '2022-01-01' AND '2022-12-31'
+GROUP BY p.product_name
+ORDER BY SUM_profit DESC
+LIMIT 1
+;
+
+
+-- Question #6: 
+
+-- How many order items of both business units (Nike Official and Nike Vintage) have been returned or cancelled, 
+	-- and what is the total sales price in $ that has been impacted by it?
+
+
+SELECT
+	'Nike Vintage' AS Business_uit,
+	COUNT(order_item_id)  AS num_items,
+  	SUM(sale_price) AS lost_sales
+ FROM order_items_vintage ov
+JOIN orders o
+ON ov.order_id = o.order_id
+WHERE o.status = 'Returned' OR o.status ='Cancelled'
+
+UNION
+
+SELECT
+	'Nike Official' AS Business_uit,
+	COUNT(order_item_id)  AS num_items,
+  	SUM(sale_price) AS lost_sales
+ FROM order_items oi
+JOIN orders o
+ON oi.order_id = o.order_id
+WHERE o.status = 'Returned' OR o.status ='Cancelled'
+;
