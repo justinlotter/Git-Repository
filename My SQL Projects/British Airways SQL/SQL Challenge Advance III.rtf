@@ -1,0 +1,191 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fswiss\fcharset0 Helvetica-Bold;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww16900\viewh10300\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 British Airways III\
+\
+
+\f1\b -- Question #1: \
+
+\f0\b0 \
+	-- Select the flight number, flight date, departure city, and arrival city for flights that leave after May 1, 2023\
+\
+SElECT\
+	fr.flight_number,\
+  	f.flight_number,\
+ 	 f.actual_flight_date,\
+	  fr.departure_city,\
+ 	 fr.arrival_city\
+From ba_flight_routes fr\
+	JOIN ba_flights f \
+  	on fr.flight_number = f.flight_number\
+ WHERE f.actual_flight_date > '2023-05-01'\
+; \
+\
+\
+
+\f1\b -- Question #2: \
+
+\f0\b0 \
+	-- Select the flight IDs, number of bike bags, and baggage weight for flights that have a baggage revenue above \'a350,000\
+\
+SELECT \
+	flight_id,\
+ 	 SUM(bike_bags) As CT_bike_bags,\
+  	SUM(baggage_weight) AS SUM_bag_weight,\
+  	SUM(revenue_from_baggage) As Revenue\
+FROM ba_flights\
+GROUP BY flight_id\
+Having SUM(revenue_from_baggage) > 50000\
+\
+\
+
+\f1\b -- Question #3: \
+
+\f0\b0 \
+-- Select all the columns for flights that are cancelled and either depart from or arrive at Panama City\
+\
+SELECT *\
+FROM ba_flights f\
+JOIN ba_flight_routes fr ON f.flight_number = fr.flight_number\
+WHERE \
+    f.status = 'Cancelled'\
+    AND (fr.departure_city = 'Panama City' OR fr.arrival_city = 'Panama City');\
+\
+
+\f1\b -- Question #4: 
+\f0\b0 \
+\
+	-- Select the flight IDs and fuel consumption for flights that either have a baggage weight below 3000 or less than 200 passengers on the flight\
+\
+SELECT\
+	f.flight_id,\
+	SUM(r.distance_flown * e.fuel_efficiency) AS feul_consumption\
+  \
+FROM ba_flights f \
+JOIN ba_flight_routes r ON f.flight_number = r.flight_number\
+JOIN ba_aircraft a ON f.flight_id = a.flight_id\
+JOIN ba_fuel_efficiency e on a.ac_subtype = e.ac_subtype\
+WHERE f.baggage_weight < 3000 \
+	AND f.total_passengers < 200\
+GROUP BY f.flight_id\
+\
+\
+
+\f1\b -- Question #5
+\f0\b0 : \
+\
+	-- Can you identify all columns of the flights that are scheduled to leave between April 15 and May 15 2023, and fly a distance less than 1000km?\
+\
+SELECT\
+	f.flight_id,\
+  	f.flight_number,\
+  	f.actual_flight_date,\
+  	f.airline,\
+  	f.status,\
+  	f.delayed_flag,\
+  	f.total_passengers,\
+  	f.baggage_weight,\
+  	f.bike_bags,\
+  	f.revenue_from_baggage,\
+	r.distance_flown\
+  \
+FROM ba_flights f \
+JOIN ba_flight_routes r ON f.flight_number = r.flight_number\
+JOIN ba_aircraft a ON f.flight_id = a.flight_id\
+JOIN ba_fuel_efficiency e on a.ac_subtype = e.ac_subtype\
+WHERE r.distance_flown < 1000\
+	AND f.status = 'Scheduled'\
+  AND f.actual_flight_date BETWEEN '2023-04-15' AND '2023-05-15'\
+;\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 -- Question #6: 
+\f0\b0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+-- What is the average number of passengers (rounded to 1 decimal) on flights from the manufacturer Boeing for aircraft that have a capacity of over 200 passengers?This question is required.*\
+SELECT \
+    ROUND(AVG(f.total_passengers),1)\
+    --ar.manufacturer,\
+   -- eff.capacity\
+\
+FROM ba_flights f\
+\
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id\
+LEFt JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype\
+\
+WHERE ar.manufacturer = 'Boeing' AND eff.capacity > 200\
+;\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 -- Question #7: 
+\f0\b0 \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 -- How many unique aircraft ac subtypes have completed at least 1 or more flights?This question is required.*\
+\
+SELECT \
+    COUNT(DISTINCT ar.ac_subtype)\
+\
+FROM ba_flights f\
+\
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id\
+LEFt JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype\
+\
+HAVING COUNT(DISTINCT ar.ac_subtype) >= 1\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 -- Question #8:
+\f0\b0 \
+ \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 -- What is the total number of flights that flew over 3,000km in distance with aircraft that had less than 100 passenger capacity?\
+\
+SELECT \
+	COUNT(f.flight_number)\
+\
+FROM ba_flight_routes r\
+\
+LEFT JOIN ba_flights f ON r.flight_number = f.flight_number\
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id\
+JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype\
+\
+WHERE r.distance_flown > 3000 AND eff.capacity < 100\
+\
+;         \
+\
+-- How many flights have been conducted by the manufacturer Airbus with ac_subtype ATR42?This question is required.*\
+\
+\
+SELECT \
+ 	COUNT(f.flight_number)\
+\
+FROM ba_flight_routes r\
+\
+LEFT JOIN ba_flights f ON r.flight_number = f.flight_number\
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id\
+JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype\
+\
+WHERE eff.manufacturer = 'Airbus' AND eff.ac_subtype = 'ART42'\
+;      \
+\
+--What is the total baggage weight that has been handled by the manufacturer Boeing with airplanes that have a fuel efficiency of more than 0.04?\
+\
+SELECT \
+ 	SUM(baggage_weight) AS bag_weight\
+\
+FROM ba_flight_routes r\
+\
+LEFT JOIN ba_flights f ON r.flight_number = f.flight_number\
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id\
+JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype\
+\
+WHERE eff.manufacturer = 'Boeing' AND eff.fuel_efficiency > 0.04\
+;  }
