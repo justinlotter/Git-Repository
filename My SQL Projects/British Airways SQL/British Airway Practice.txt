@@ -1,0 +1,384 @@
+-- Exercise A 
+
+	-- Show me all flight_ids for delayed flights and their capacity, where the manufacturer is Boeing.
+	-- Hint: you can use ac_subtype and flight_id as a join keys
+
+-- 1. select flights_id with delayed flights as a join key ba_aircraft
+-- 2. capacity (ba_feul_efficiency)
+-- 3. manufacturer ='boeing'
+ 
+
+SELECT
+	fl.flight_id,
+  	ef.capacity
+FROM ba_flights fl
+
+LEFT JOIN ba_aircraft ar
+		ON fl.flight_id = ar.flight_id
+LEFT JOIN ba_fuel_efficiency ef
+		ON ar.ac_subtype = ef.ac_subtype
+
+WHERE ar.manufacturer ='Boeing' and fl.delayed_flag ='Y'
+;
+
+-- Exercise B
+
+	-- Show me all flight_numbers departing from London, with 50+ passengers on board, and the ac_subtype.
+	-- HINT: you can use flight_number and flight_id as JOIN keys.
+
+SELECT
+	fr.flight_number,
+  	ar.ac_subtype
+  
+FROM ba_flights f
+
+JOIN ba_flight_routes fr
+	ON f.flight_number = fr.flight_number
+  
+JOIN ba_aircraft ar
+	ON f.flight_id = ar.flight_id
+  
+WHERE fr.departure_city ='London' AND f.total_passengers >=50
+;
+
+-- sultans code
+SELECT flight_id, ac_subtype
+FROM ba_flights
+JOIN ba_flight_routes USING (flight_number)
+JOIN ba_aircraft  USING (flight_id)
+WHERE departure_city = 'London' AND total_passengers >=50
+
+-- Exercise C
+
+	-- What is the total distance_flown for flights for delayed flights where the Manufacturer is Airbus? 
+  	-- Only show the data of flights where the manufacturer is available.
+	-- Hint: let’s try this one without a hint!
+
+SELECT SUM(distance_flown)
+FROM ba_flight_routes
+JOIN ba_flights bf USING (flight_number)
+JOIN ba_aircraft USING (flight_id)
+JOIN ba_fuel_efficiency bfe USING (ac_subtype)
+WHERE bf.delayed_flag = 'Y' AND bfe.manufacturer = 'Airbus'
+;
+
+	— Amanda’s question was: 
+	--“ We’d like to see how many passengers flew on airplanes using inefficient engines 
+  	-- (fuel_efficiency below the industry benchmark of .025), per aircraft subtype ”
+
+
+  
+SELECT
+	eff.ac_subtype,
+	SUM (f.total_passengers),
+ 	 eff.fuel_efficiency
+FROM ba_flights f
+JOIN ba_aircraft ar USING (flight_id)
+JOIN ba_fuel_efficiency eff USING(ac_subtype)
+WHERE eff.fuel_efficiency < 0.025
+GROUP BY eff.ac_subtype;
+
+	-- Show me all flight_numbers, status, fuel_effciency and total baggage_weight for flights where the manufacturer is Airbus.
+	-- Hint: you can use ac_subtype and flight_id as a join keys
+
+
+SELECT 
+			f.flight_number,
+      f.status,
+      eff.fuel_efficiency,
+      SUM(f.baggage_weight) AS total_bag
+
+FROM ba_flights f
+
+LEFT JOIN ba_aircraft a ON f.flight_id = a.flight_id
+LEFT JOIN ba_fuel_efficiency eff ON a.ac_subtype = eff.ac_subtype
+
+WHERE eff.manufacturer = 'Airbus'
+
+GROUP BY 
+			f.flight_number,
+      f.status,
+      eff.fuel_efficiency
+      ;
+
+-- Exercise D
+
+	-- Show me all flight_numbers that fly for 1000+ miles, with ac_subtype, departure & arrival city and 0 passengers on board.
+	-- HINT: you can use flight_number and flight_id as JOIN keys.
+  
+SELECT
+			f.flight_number,
+      a.ac_subtype,
+      r.departure_city,
+      r.arrival_city,
+      r.distance_flown,
+      f.total_passengers
+      
+FROM ba_flights f
+
+LEFT JOIN ba_aircraft a ON f.flight_id = a.flight_id
+LEFT JOIN ba_flight_routes r ON f.flight_number = r.flight_number
+
+WHERE f.total_passengers = 0 AND r.distance_flown > 1000
+;
+
+
+--Exercise E
+
+	-- Show me the number of flights per arrival & departure city where there is no listed ac_subtype.
+	-- Show output in descending order by number of flights.
+	-- Hint: you can filter for NULL values using WHERE <column> IS NULL (or IS NOT NULL)
+
+SELECT
+		 a.ac_subtype,
+     r.arrival_city,
+     r.departure_city,
+     COUNT(f.flight_id) AS num_flight
+
+FROM ba_flights f
+
+LEFT JOIN ba_aircraft a ON f.flight_id = a.flight_id
+LEFT JOIN ba_flight_routes r ON f.flight_number = r.flight_number
+
+WHERE a.ac_subtype IS NULL
+GROUP BY 		
+		a.ac_subtype,
+     r.arrival_city,
+     r.departure_city
+ORDER BY num_flight DESC
+;
+
+-- Show a list of null values in terms of ac_subtype or manufacturer.
+
+SELECT
+		a.ac_subtype,
+    a.manufacturer,
+    fl.flight_id
+FROM ba_flights fl
+LEFT JOIN ba_aircraft a ON fl.flight_id = a.flight_id
+WHERE manufacturer IS NULL;
+
+-- 177 null values, it could be private jets, which has a flight ID but no plane details, or it could be discontinued planes.
+
+-- “ Can you show me the % of passengers & flights covered by each manufacturer, 
+	-- and what % we cannot attribute to a manufacturer currently due to data issues? ”
+	-- How would you approach this?
+  
+SELECT
+    a.manufacturer,
+   	COUNT(fl.flight_id) AS Total_flights,
+    SUM(fl.total_passengers) AS total_pass
+  
+FROM ba_flights fl
+LEFT JOIN ba_aircraft a ON fl.flight_id = a.flight_id
+GROUp BY a.manufacturer
+; -- fist find the totals then place it in a case statement and CTES statement
+
+
+
+WITH CTES AS (
+            SELECT
+                 ar.manufacturer,
+                 SUM(total_passengers) AS total_passengers,
+                 COUNT(fl.flight_id)  AS count_flight
+            FROM ba_flights fl
+            LEFT JOIN ba_aircraft ar ON fl.flight_id=ar.flight_id
+            GROUP BY ar.manufacturer)
+
+SELECT
+
+ROUND(SUM(CASE WHEN manufacturer IS NULL THEN total_passengers ELSE 0 END)/SUM(total_passengers)*100,1) AS perc_pass_null,
+
+ROUND(SUM(CASE WHEN manufacturer IS NULL THEN count_flight ELSE 0 END)/SUM(count_flight)*100,1) AS perc_flight_null
+
+FROM CTES
+;
+  
+--Exercise F
+
+-- What is the average number of passengers (rounded to 1 decimal) on flights from the manufacturer Boeing for aircraft that have a capacity of over 200 passengers?This question is required.*
+
+SELECT 
+    ROUND(AVG(f.total_passengers),1)
+    --ar.manufacturer,
+   -- eff.capacity
+
+FROM ba_flights f
+
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id
+LEFt JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype
+
+WHERE ar.manufacturer = 'Boeing' AND eff.capacity > 200
+;
+
+--Exercise G
+
+-- How many unique aircraft ac subtypes have completed at least 1 or more flights?This question is required.*
+
+SELECT 
+    COUNT(DISTINCT ar.ac_subtype)
+
+FROM ba_flights f
+
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id
+LEFt JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype
+
+HAVING COUNT(DISTINCT ar.ac_subtype) >= 1
+
+
+--Exercise H
+
+-- What is the total number of flights that flew over 3,000km in distance with aircraft that had less than 100 passenger capacity?
+
+SELECT 
+ 				COUNT(f.flight_number)
+
+FROM ba_flight_routes r
+
+LEFT JOIN ba_flights f ON r.flight_number = f.flight_number
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id
+JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype
+
+WHERE r.distance_flown > 3000 AND eff.capacity < 100
+
+;         
+
+
+--Exercise I
+
+-- How many flights have been conducted by the manufacturer Airbus with ac_subtype ATR42?This question is required.*
+
+
+SELECT 
+ 				COUNT(f.flight_number)
+
+FROM ba_flight_routes r
+
+LEFT JOIN ba_flights f ON r.flight_number = f.flight_number
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id
+JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype
+
+WHERE eff.manufacturer = 'Airbus' AND eff.ac_subtype = 'ART42'
+;      
+
+
+--Exercise J
+
+--What is the total baggage weight that has been handled by the manufacturer Boeing with airplanes that have a fuel efficiency of more than 0.04?
+
+SELECT 
+ 				SUM(baggage_weight) AS bag_weight
+
+FROM ba_flight_routes r
+
+LEFT JOIN ba_flights f ON r.flight_number = f.flight_number
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id
+JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype
+
+WHERE eff.manufacturer = 'Boeing' AND eff.fuel_efficiency > 0.04
+;  
+
+
+--Exercise K
+
+-- 1. Can you count the flights that are shorter than 10% of the distance of the longest route that we offer?
+
+
+
+SELECT 
+		MAX(distance_flown)*0.1 AS tezn_percernt
+FROM ba_flight_routes
+; -- 10% of longest flight
+
+SELECT
+		COUNT(*)
+FROM ba_flight_routes
+; -- count of flights
+
+SELECT
+		COUNT(distinct flight_number)
+FROM ba_flight_routes
+WHERE distance_flown < (SELECT 
+				MAX(distance_flown)*0.1 AS tezn_percernt
+				FROM ba_flight_routes)
+; 
+
+-- K 1 Can you count the flights that are shorter than 600km ? 
+	-- check by arrival city
+
+SELECT
+		COUNT(distinct flight_number)
+FROM ba_flight_routes
+WHERE  flight_number IN (SELECT 
+				flight_number
+				FROM ba_flight_routes
+                        		 WHERE distance_flown >600)
+                         
+-- K 2. Please count all the flight routes in which we had 10 or more flights with less than 100 passengers each.
+
+SELECT
+
+  COUNT(flight_number)
+FROM (SELECT
+ 		flight_number,
+ 		COUNT(flight_id)
+    FROM ba_flights
+    WHERE total_passengers<100
+    GROUP BY flight_number
+    HAVING COUNT(flight_id) >=10) AS important_routes
+    -- filter needs to be applied to all data--
+        
+—K 3. The absolute numbers are great, but could you be so kind and give me the percentages of all offered routes for both questions? 1 AND 2
+
+SELECT
+   ROUND(((short_distance.c*100.0)/total_count.c),2) AS perc_short_dist_flown,
+   ROUND(((flight_passegers_number.c*100.0)/total_count.c),2) AS perc_few_passenger_flown
+FROM (SELECT
+        COUNT(flight_number) AS C
+      FROM ba_flight_routes) AS total_count
+
+CROSS JOIN (SELECT
+              COUNT(DISTINCT flight_number) AS C
+            FROM ba_flight_routes
+             WHERE distance_flown <(SELECT MAX(distance_flown)*0.1 AS perc_dist_flown
+            FROM ba_flight_routes)) AS short_distance
+
+CROSS JOIN (SELECT
+              COUNT(flight_number) AS C
+           FROM (SELECT flight_number, COUNT(flight_id)
+                 FROM ba_flights
+                 WHERE total_passengers<100
+                 GROUP BY flight_number
+                 HAVING COUNT(flight_id) >=10) AS important_routes) AS flight_passegers_number
+
+-- LEFT JOIN OPTION
+
+SELECT
+  	ROUND((COUNT(short_distance.flight_number)*100.0)/COUNT(*),2) AS perc_short_distance_flown,
+   	ROUND((COUNT(flight_passegers_number.flight_number)*100.0/COUNT(*)),2) AS perc_few_passengers  
+
+FROM ba_flight_routes AS total_count
+
+LEFT JOIN (SELECT
+             flight_number
+            FROM ba_flight_routes
+             WHERE distance_flown <(SELECT MAX(distance_flown)*0.1 AS perc_dist_flown
+            
+            FROM ba_flight_routes)) AS short_distance
+						ON total_count.flight_number=short_distance.flight_number
+
+LEFT JOIN (SELECT
+              flight_number
+           FROM (SELECT flight_number, COUNT(flight_id)
+
+                 FROM ba_flights
+                 WHERE total_passengers<100
+                 GROUP BY flight_number
+                 HAVING COUNT(flight_id) >=10) AS important_routes) AS flight_passegers_number
+							ON total_count.flight_number=flight_passegers_number.flight_number
+
+
+
+
+
+
