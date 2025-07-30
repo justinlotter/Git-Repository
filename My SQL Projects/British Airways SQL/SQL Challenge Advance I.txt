@@ -1,0 +1,127 @@
+-- SQL Challenge - Adv. British Airways I--
+
+-- Question #1: 
+	-- Create a list of flights, showing the flight ID, departure city, arrival city, manufacturer, and aircraft sub-type that will be used for each flight
+	 -- Show the results for all flights that are available even if not all information is available for all flights.
+
+SELECT
+		f.flight_id,
+    r.departure_city,
+    r.arrival_city,
+        r.departure_city,
+    r.arrival_city
+
+FROM ba_flights f
+
+LEFT JOIN ba_flight_routes r ON f.flight_number = r.flight_number
+FULL JOIN ba_aircraft a ON f.flight_id = a.flight_id
+;
+
+-- Question #2: 
+	-- What is the maximum number of passengers that have been on every available aircraft (manufacturer and sub-type) for flights that have been completed?
+		-- If the manufacturer and sub-type are not available for flights, we do not need to show the results of these flights.
+
+SELECT
+    MAX(f.total_passengers) as max_pass,
+    a.manufacturer,
+    a.ac_subtype,
+    f.status
+ 
+FROM ba_aircraft a
+LEFT JOIN ba_flights f ON f.flight_id = a.flight_id
+
+WHERE f.status ='Completed'
+GROUP BY a.manufacturer, a.ac_subtype, f.status
+;
+
+-- Question #3: 
+	-- Since only some aircraft are capable of flying long distances overseas, we want to filter out the planes that only do shorter distances.
+	-- WHat aircraft (manufacturer and sub-type) have completed flights of a distance of more than 7,000 km? 
+	-- If the manufacturer and sub-type are not available for flights, we do not need to show the results of these flights.
+  
+SELECT
+    a.manufacturer,
+    a.ac_subtype,
+    MAX(r.distance_flown) max_distance
+ 
+FROM ba_flights f
+Inner JOIN ba_aircraft a ON f.flight_id = a.flight_id
+INNER JOIN ba_flight_routes r ON r.flight_number = f.flight_number
+
+WHERE r.distance_flown > 7000
+GROUP BY a.manufacturer, a.ac_subtype
+;
+
+-- Question #4: 
+	-- What is the most used aircraft (manufacturer and sub-type) for flights departing from London and arriving in Basel, Trondheim, or Glasgow? 
+	-- Include the number of flights that the aircraft was used for.
+  -- If the manufacturer and sub-type are not available for flights, we do not need to show the results of these flights.
+
+SELECT
+	COUNT(f.flight_id) AS num_flights,
+  	a.manufacturer,
+	a.ac_subtype
+
+FROM ba_flights f
+Inner JOIN ba_aircraft a ON f.flight_id = a.flight_id
+INNER JOIN ba_flight_routes r ON r.flight_number = f.flight_number
+
+WHERE r.departure_city = 'London'
+	AND r.arrival_city  IN ('Basel','Trondheim', 'Glasgow')
+  
+ GROUP BY 
+	a.manufacturer, a.ac_subtype
+    
+ ORDER BY num_flights DESC
+ LIMIT 1
+ ;
+ 
+ -- Question #5: 
+	-- For the flight routes highlighted in question 4 combined, would there have been an aircraft that, on average, would use less fuel on the flight routes? 
+  	-- The fuel used in liters per flight can be calculated by multiplying the fuel efficiency metric by distance, baggage weight, and number of passengers. 
+	-- What aircraft (manufacturer and sub-type) would you recommend to use for each of these flight routes if you use the average fuel consumption as your guiding metric?
+	-- If the manufacturer and sub-type are not available for flights, we do not need to show the results of these flights.
+  
+  SELECT
+      a.manufacturer,
+      a.ac_subtype,
+      AVG(eff.fuel_efficiency * r.distance_flown * f.baggage_weight * f.total_passengers) AS fuel_used    
+
+  From ba_flights f
+
+  Inner JOIN ba_aircraft a ON f.flight_id = a.flight_id
+  INNER JOIN ba_flight_routes r ON r.flight_number = f.flight_number
+  INNER JOIN ba_fuel_efficiency eff ON a.ac_subtype = eff.ac_subtype
+
+  WHERE r.departure_city = 'London'
+    AND r.arrival_city  IN ('Basel','Trondheim', 'Glasgow')
+
+  GROUP BY 
+        a.manufacturer,
+      a.ac_subtype
+    ORDER BY fuel_used ASC
+   ;
+
+-- Question #6: 
+	-- The fuel used in liters per flight can be calculated by multiplying the fuel efficiency metric by distance, baggage weight, and number of passengers. 
+	-- Calculate the total amount of fuel used per kilometer flown of completed flights per manufacturer. 
+  	-- What manufacturer has used less fuel per km in total?
+	-- If flights do not have data available about the aircraft type, you can exclude the flights from the analysis.
+    
+  SELECT
+      a.manufacturer,
+      SUM(eff.fuel_efficiency * r.distance_flown * f.baggage_weight * f.total_passengers) /  SUM(r.distance_flown) AS fuel_used
+
+  From ba_flights f
+
+  Inner JOIN ba_aircraft a ON f.flight_id = a.flight_id
+  INNER JOIN ba_flight_routes r ON r.flight_number = f.flight_number
+  INNER JOIN ba_fuel_efficiency eff ON a.ac_subtype = eff.ac_subtype
+
+  WHERE f.status = 'Completed'
+
+  GROUP BY 
+        a.manufacturer
+
+  ORDER BY fuel_used ASC
+   ;
