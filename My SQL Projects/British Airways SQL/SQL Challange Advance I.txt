@@ -1,0 +1,151 @@
+-- SQL Challenge - Adv. British Airways II -- 
+
+-- Question #1: 
+	-- To get started with analysis, create a summary of how many short-haul versus long-haul flights happen. 
+  -- A typical short-haul flight in Europe has a maximum distance of 2,000 km.
+ 		-- How many flights are scheduled or completed for both short-haul and long-haul flights in 2023?
+
+SELECT
+			COUNT(r.flight_number) AS flight_count,
+    CASE 
+        WHEN r.distance_flown > 2000 THEN 'Long-haul' 
+        ELSE 'Short-haul' 
+    END AS haul
+      
+ FROM ba_flight_routes r
+ JOIN ba_flights f 
+ 			ON r.flight_number = f.flight_number
+WHERE EXTRACT(year FROM f.actual_flight_date) = 2023
+-- WHERE DATE_PART('year', fl.actual_flight_date) = 2023 -- second option
+ 				AND status IN ('Completed' , 'Scheduled') -- one needs to removed 'Cancelled' from the count
+ GROUP BY haul 
+ ;
+
+-- Question #2: -- INCORRECT ANSWER
+	-- We can calculate how full flights were by comparing the number of passengers on the flight against the capacity of the aircraft.
+	-- Calculate the average number of empty seats for the short-haul and long-haul flights. Additionally, 
+  		-- can you also calculate the average number of empty seats as a percentage of the maximum number of passengers?
+	-- If the manufacturer and sub-type are not available for flights, we do not need to show the results of these flights.
+
+
+SELECT 
+			 CASE WHEN route.distance_flown <= 2000 THEN 'Short-haul'
+						WHEN route.distance_flown > 2000 THEN 'Long-haul'
+            ELSE 'Error'
+       END AS flight_length,
+       AVG(fuel.capacity - flight.total_passengers) AS avg_empty_seat,
+       AVG((fuel.capacity - flight.total_passengers)::float/fuel.capacity) AS avg_empty_seat_perc
+
+FROM ba_flights flight
+     LEFT JOIN ba_flight_routes route ON flight.flight_number = route.flight_number
+     INNER JOIN ba_aircraft aircraft ON aircraft.flight_id = flight.flight_id
+     LEFT JOIN ba_fuel_efficiency fuel ON fuel.ac_subtype = aircraft.ac_subtype
+
+GROUP BY flight_length
+;
+
+--INNER JOINS would work as well for ba_flight_routes and ba_fuel_efficiency
+
+
+-- Question #3: 
+	-- Calculate the total number of scheduled flights used with more than 100 empty seats in the plane. 
+	-- Split the flights by short-haul and long-haul flights.
+	-- Exclude the flights where the manufacturer and sub-type are not available
+
+SELECT 
+			COUNT(f.flight_number) AS Num_flights,
+      CASE WHEN r.distance_flown > 2000 THEN 'Long-haul'
+     			 ELSE 'Short-haul'  
+           EnD AS Haul
+      
+FROM ba_flights f
+      
+LEFT JOIN ba_flight_routes r ON F.flight_number = r.flight_number
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id
+LEFT JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype
+
+WHERE f.status = 'Scheduled' 
+	AND ar.ac_subtype IS NOT NULL 
+  AND (eff.capacity - f.total_passengers) > 100
+GROUP BY haul
+;
+
+-- Question #4: 
+	-- What short-haul flight routes that have been completed have the highest average number of empty seats? 
+	-- Include the flight number, departure city, arrival city, number of completed flights, and average empty seats in your results.
+	-- Make sure to include all flights that are available in the data even if the capacity information for some flights might be missing.
+
+SELECT 
+			f.flight_number,
+      r.departure_city,
+      r.arrival_city,
+			COUNT(f.flight_number) AS Num_flights,
+      AVG(eff.capacity - f.total_passengers) AS avg_empty_seats,
+			r.distance_flown AS Short_Haul
+      
+FROM ba_flights f
+      
+LEFT JOIN ba_flight_routes r ON F.flight_number = r.flight_number
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id
+FULL JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype
+
+WHERE f.status = 'Completed' AND r.distance_flown  < 2000
+
+GROUP BY 			f.flight_number, r.departure_city,r.arrival_city, r.distance_flown
+ORDER BY avg_empty_seats DESC
+;
+
+-- Question #5: 
+	-- What are the short-haul flight routes and the average number of seats for short-haul flight routes that only have been completed 2 or fewer times? 
+	-- Include the flight number, departure city, arrival city, and average empty seats in your results.
+	-- Make sure to include all flights that are available in the data even if the capacity information for some flights might be missing.
+  
+SELECT 
+			f.flight_number,
+      r.departure_city,
+      r.arrival_city,
+      ROUND(AVG(eff.capacity - f.total_passengers),0) AS avg_empty_seats,
+      --AVG(COALESCE(eff.capacity, 0) - f.total_passengers) AS avg_empty_seats,
+      COUNT(f.flight_number) AS flight_count
+      
+FROM ba_flights f
+      
+LEFT JOIN ba_flight_routes r ON F.flight_number = r.flight_number
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id
+LEFT JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype
+
+WHERE f.status = 'Completed' 
+	AND r.distance_flown < 2000 -- Short Haul Flights
+GROUP BY 			f.flight_number, r.departure_city,r.arrival_city
+HAVING COUNT(f.flight_number) <= 2
+ORDER BY f.flight_number
+;
+
+-- Question #6:  -- INCORRECT ANSWER
+	-- What are the short-haul flight routes and the average number of seats for short-haul flight routes that only have been completed 2 or fewer times that either depart or arrive in London? 
+	-- Include the flight number, departure city, arrival city, and average empty seats in your results.
+	-- Make sure to include all flights that are available in the data even if the capacity information for some flights might be missing.
+  
+  
+ SELECT 
+			f.flight_number,
+      r.departure_city,
+      r.arrival_city,
+      ROUND(AVG(eff.capacity - f.total_passengers),2) AS avg_empty_seats
+
+FROM ba_flights f
+      
+LEFT JOIN ba_flight_routes r ON F.flight_number = r.flight_number
+LEFT JOIN ba_aircraft ar ON f.flight_id = ar.flight_id
+LEFT JOIN ba_fuel_efficiency eff ON ar.ac_subtype = eff.ac_subtype
+
+WHERE f.status = 'Completed' 
+	AND r.distance_flown <= 2000 -- Short Haul Flights
+  AND (r.departure_city = 'London' OR r.arrival_city = 'London') -- flighst to and from london
+GROUP BY 			f.flight_number, r.departure_city, r.arrival_city
+HAVING COUNT(DISTINCT f.flight_number) <= 2
+ORDER BY f.flight_number
+;
+
+
+--INNER joins also work for the ba_fuel_efficiency and ba_flight_routes tables
