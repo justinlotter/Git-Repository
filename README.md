@@ -1,2 +1,2 @@
 # Code storage
-All mastershcool projects
+All  projects
