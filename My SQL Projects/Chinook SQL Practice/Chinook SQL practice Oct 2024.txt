@@ -1,0 +1,350 @@
+-- October 2024 --  UNIONS
+
+SELECT
+	customer_id,
+  	first_name AS first_name_customer,
+  	last_name
+FROM customer
+	UNION
+SELECT 
+	employee_id,
+  	first_name,
+  	last_name
+FROM employee
+;
+
+-- Q1 Give a list of the 5 shortest and 5 longest tracks!
+
+(SELECT
+	track_id,
+  	name,
+  	milliseconds,
+ 	'shortest track' As table_output
+FROM track
+ORDER BY milliseconds ASC
+LIMIT 5)
+
+UNION ALL
+
+(SELECT
+	track_id,
+ 	name,
+  	milliseconds,
+ 	'longest_track'
+FROM track
+ORDER BY milliseconds DESC
+LIMIT 5)
+;
+
+-- Q2 Show the 5 shortest rock songs and the 5 shortest classical songs in one table!
+
+
+(SELECT
+	track.track_id,
+  	track.name,
+  	track.milliseconds,
+  	'rock songs'
+FROM track
+JOIN genre ON track.genre_id = genre.genre_id
+ WHERE genre.name = 'Rock'
+ORDER BY milliseconds ASC
+LIMIT 5)
+
+UNION
+
+(SELECT
+	track.track_id,
+ 	 track.name,
+ 	 track.milliseconds,
+ 	'classical songs'
+FROM track
+JOIN genre ON track.genre_id = genre.genre_id
+  WHERE genre.name = 'Classical'
+ORDER BY milliseconds ASC
+LIMIT 5)
+;
+
+-- Q3 Show example albums of the bands U2, AC/DC and Aerosmith (one each) in one table!
+
+(SELECT
+   	ar.name,
+   	al.title
+FROM album al
+INNER JOIN artist ar
+  ON al.artist_id=ar.artist_id
+WHERE ar.name IN ('U2')
+LIMIT 1)
+
+UNION ALL
+
+(SELECT
+  	 ar.name,
+  	al.title
+FROM album al
+INNER JOIN artist ar
+  ON al.artist_id=ar.artist_id
+WHERE ar.name IN ('AC/DC')
+LIMIT 1)
+
+UNION ALL
+
+(SELECT
+  	 ar.name,
+	  al.title
+FROM album al
+INNER JOIN artist ar
+  ON al.artist_id=ar.artist_id
+WHERE ar.name IN ('Aerosmith')
+LIMIT 1)
+
+-- Q4 Show the 3 newest and the 3 youngest employees in one table!
+
+(SELECT
+	first_name,
+  	last_name,
+ 	 hire_date,
+ 	'newest' AS coulomb_output
+FROM employee
+ORDER BY hire_date DESC
+LIMIT 3)
+
+UNION ALL
+
+(SELECT
+	first_name,
+ 	 last_name,
+	  birth_date,
+ 	'youngest'
+FROM employee
+ORDER BY hire_date ASC
+LIMIT 3)
+;
+
+-- date and time
+
+SELECT 
+	CURRENT_DATE,
+   	 CURRENT_TIME,
+   	 NOW(),
+    	CURRENT_TIMESTAMP;
+ ;
+
+--  Extracting date and time using extract()
+
+SELECT 
+	EXTRACT( YEAR FROM CURRENT_DATE) AS YEAR,
+    	EXTRACT ( MONTH FROM CURRENT_DATE) AS MONTH,
+   	 EXTRACT ( DAY FROM CURRENT_DATE) AS DAY
+ ;
+
+--  How many years of invoice record we have in our database?
+
+SELECT
+ 	EXTRACT(YEAR FROM invoice_date) AS YEAR
+ FROM invoice
+    ;
+
+SELECT
+	DISTINCT (EXTRACT(YEAR FROM invoice_date)) AS YEAR
+ FROM invoice
+    ;
+    
+SELECT
+	COUNT(DISTINCT (EXTRACT(YEAR FROM invoice_date))) AS YEAR
+ FROM invoice
+    ;
+
+-- extracting year, month and day using date_part
+
+SELECT
+	DATE_PART('year', current_date) as YEAR,
+    	DATE_PART('month', CURRENT_DATE) AS MONTH,
+  	 DATE_PART('day', CURRENT_DATE) AS DAY
+ ;
+
+-- Truncating date--
+
+SELECT
+	DATE_TRUNC ('month', CURRENT_TIMESTAMP) trunc_month,
+   	DATE_TRUNC( 'hours', CURRENT_TIMESTAMp) tranc_hours
+    ;
+    
+-- Find the number of employee hired in each month of the year
+
+SELECT
+	COUNT(employee_id),
+    	DATE_TRUNC ('month', hire_date) AS month_hire
+FROM employee
+GROUP BY DATE_TRUNC ('month', hire_date)
+;
+
+
+-- formatting date and time using char
+
+SELECT
+
+	TO_CHAR(CURRENT_DATE, 'YYYY-MM_DD') AS international,
+    	TO_CHAR(CURRENT_DATE, 'DD-MM-YYYY') AS eu_format,
+    	TO_CHAR(CURRENT_DATE, 'MM-DD-YYYY') AS US_format,
+    	TO_CHAR(CURRENT_DATE, 'Month') AS MONTH,
+    	TO_CHAR(CURRENT_DATE, 'Day') AS Day,
+   	 TO_CHAR(CURRENT_DATE, 'Dy') AS Day_short
+            ;
+
+—Q5 FIND the number of invoices created in each month of 2023
+
+SELECT
+	TO_CHAR(invoice_date, 'Month') AS month,
+    	COUNT(invoice_id)
+FROM invoice
+WHERE EXTRACT(YEAR FROM invoice_date) = 2023
+GROUP BY TO_CHAR(invoice_date, 'Month')
+;
+
+
+
+--JOIN Practice -2
+
+—Q6 .Show the Ids of customers that ordered less than 38 Songs
+
+SELECT
+  	customer_id
+FROM invoice i
+JOIN invoice_line il
+  ON i.invoice_id=il.invoice_id
+GROUP BY i.customer_id
+HAVING COUNT(DISTINCT il.track_id)<38;
+
+
+—Q7. Which artists have at least 20 Rock Songs in our track table?
+
+
+SELECT
+    	ar.name AS artist
+FROM track AS t
+JOIN album AS al
+   ON t.album_id = al.album_id
+JOIN artist AS ar
+   ON al.artist_id = ar.artist_id
+JOIN genre AS g
+   ON t.genre_id = g.genre_id
+WHERE g.name = 'Rock'
+GROUP by ar.name
+HAVING COUNT(DISTINCT track_id) > 20
+ORDER BY artist
+
+
+—Q8 .Which employee (first_name, last_name) is responsible for the most customers?
+
+
+SELECT 
+  	e.first_name,
+  	e.last_name,
+  	COUNT(c.customer_id)
+FROM customer c
+JOIN employee e
+   ON c.support_rep_id = e.employee_id
+GROUP BY e.first_name, e.last_name
+ORDER BY COUNT(c.customer_id) DESC
+LIMIT 1;
+
+
+—9.Which songs (track_id, name) did Astrid Gruber order from us?
+
+SELECT 
+ 	 t.track_id, 
+ 	 t.name
+FROM customer c
+JOIN invoice i
+   ON c.customer_id = i.customer_id
+JOIN invoice_line il
+   ON i.invoice_id = il.invoice_id
+JOIN track t
+   ON t.track_id = il.track_id
+WHERE c.first_name = 'Astrid' AND c.last_name = 'Gruber';
+
+
+--JOIN_Practice-3
+
+—Q10 which artists have at least 5 albums with rock songs in our database?
+
+SELECT 
+      ar.name,
+      g.name,
+      COUNT(DISTINCT(al.album_id)) AS num_albums
+
+FROM artist ar
+JOIN album al ON al.artist_id = ar.artist_id
+JOIN track t ON al.album_id = t.album_id
+JOIN genre g ON t.genre_id = g.genre_id
+WHERE g.name = 'Rock'
+GROUP BY ar.name, g.name
+HAVING COUNT(DISTINCT(al.album_id)) >= 5
+;
+
+
+—Q11. Find the average unit price of tracks sold in the year 2024.
+
+SELECT
+	ROUND(AVG(t.unit_price),2) AS avg_price
+FROM track t
+
+JOIN invoice_line il On t.track_id = il.track_id
+JOIN invoice i ON il.invoice_id = i.invoice_id
+
+--WHERE i.invoice_date BETWEEN '2024-01-01' AND '2024-12-31'
+WHERE EXTRACT(YEAR FROM i.invoice_date) =2024
+;
+
+—Q12 List the top 5 customers who spent the most money.
+
+SELECT
+	c.first_name,
+     	c.last_name,
+    	 SUM(i.total)
+FROM customer c
+JOIN invoice i ON c.customer_id = i.customer_id
+GROUP BY c.first_name, c.last_name
+ORDER BY SUM(i.total) DESC
+LIMIT 5
+;
+      
+—Q13 Calculate the percentage of total revenue each genre contributes.
+                                             
+SELECT 
+	g.name,
+  	SUM(il.unit_price * il.quantity) AS total,
+  	ROUND((SUM(il.unit_price * il.quantity)/(SELECT SUM(unit_price * quantity)
+FROM invoice_line))* 100, 2) AS total_revenue 
+FROM invoice AS i
+JOIN invoice_line AS il ON il.invoice_id = i.invoice_id
+JOIN track AS t ON t.track_id = il.track_id
+JOIN genre AS g ON g.genre_id = t.genre_id
+GROUP BY g.genre_id
+ORDER BY 2 DESC;
+                                                
+
+—Q14 Find the employee who sold the most albums in 2022.
+
+SELECT
+	emp.first_name,
+    	emp.last_name,
+    	COUNT(il.quantity) AS qty_sold
+FROM employee emp
+JOIN customer c
+		ON emp.employee_id = c.support_rep_id
+JOIN invoice i
+		ON c.customer_id = i.customer_id
+JOIN invoice_line il
+		ON i.invoice_id = il.invoice_id
+GROUP BY emp.first_name, emp.last_name
+ORDER BY qty_sold DESC
+LIMIT 1;
+;
+
+
+
+
+
+
+

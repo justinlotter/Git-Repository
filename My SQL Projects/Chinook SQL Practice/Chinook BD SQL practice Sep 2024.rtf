@@ -1,0 +1,303 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww16740\viewh11360\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 --/Q1 *Classify tracks based on their length into categories: 'Short' (< 3 minutes), \
+   --'Medium' (3-5 minutes),and 'Long' (> 5 minutes).\
+\
+SELECT\
+	track_id,\
+  	composer,\
+  	milliseconds / (1000*60)AS Time_min,\
+	CASE\
+		WHEN milliseconds / (1000*60) > 3 THEN 'Short'\
+		WHEN milliseconds / (1000*60) BETWEEN 3 AND 5 THEN 'Between'    \
+    ELSE 'Long' \
+	END AS Catergory_min\
+FROM track\
+;\
+\
+/*Q2 Display the track name, album_id, and a flag indicating if the track is 'High Price' or \
+'Standard Price' based on whether the unit_price is greater than 0.99(if unit_price>0.99 indicates \'91High Price\'92).\
+count the number of albums in each new category(High price and Standard) */\
+\
+-- output; album_id, name, case statment\
+	-- case when unit price > 0.99 'high price' else 'standard'\
+\
+SELECT\
+	COUNT(album_id),\
+ 	price_catergory\
+  \
+FROM (\
+        SELECT\
+          name,\
+          album_id,\
+        CASE\
+        WHEN unit_price > 0.99 THEN 'High_price'\
+        ELSE 'Standard' \
+        END AS Price_Catergory\
+        FROM track ) AS catergory \
+\
+GROUP BY price_catergory\
+;\
+\
+--Q3 Classify tracks into 'Small' [<5MB], 'Medium'[between 5MB and 10MB], and 'Large' [>10MB] based on their bytes and display the track name and the size category.\
+\
+\
+SELECT \
+	name,\
+      	bytes/1048576 AS MB,\
+	case WHEN bytes/1048576 <5 THEN 'Small'\
+       	WHEN bytes/1048576 	BETWEEN 5 AND 10 THEN 'Large'\
+       	WHEN bytes/1048576 > 10 THEN 'Large'\
+        ELSE 'Medium' END AS size_category\
+FROM track\
+;\
+\
+\
+--Q4 Display track names and classify them as 'Old Media' or 'New Media' based on the media_type_id (assume media_type_id 1 and 2 are old, others are new). -- count the tracks_id in each media type\
+\
+\
+\
+SELECT \
+	name,\
+	case WHEN media_type_id IN (1,2) THEN 'Old Media'\
+        	ELSE 'new Media' END AS classifaction\
+FROM track\
+;\
+\
+SELECT \
+	name,\
+	case WHEN media_type_id IN (1,2) THEN 'Old Media'\
+       	 ELSE 'new Media' END AS classification,\
+	COUNT(track_id) AS num_tracks\
+FROM track\
+GROUP BY classification, name\
+ORDER BY num_tracks DESC\
+;\
+\
+\
+--Q5 Classify albums as 'Single Track' (only have one track) or 'Multiple Tracks' based on the number of tracks they contain in the album, and display the album ID and classification.\
+		-- count the tracks_id in each classification\
+\
+SELECT \
+	album_id,\
+ 	case WHEN track_id = 1 THEN 'single_track'\
+      	ELSE 'Multiple_tracks' \
+     	END AS classification\
+FROM track\
+;\
+\
+\
+SELECT \
+	album_id,\
+ 	case WHEN COUNT(track_id) = 1 THEN 'single_track'\
+     	ELSE 'Multiple_tracks' \
+     	END AS classification\
+FROM track\
+GROUP BY album_id\
+;\
+\
+\
+--Q6 Find the number of tracks for each album_id and display album with more than 2 tracks in descending order.\
+\
+SELECT \
+	album_id,\
+ 	COUNT(track_id) AS Num_tracks\
+FROM track\
+GROUP BY album_id\
+HAVING COUNT(track_id) > 2\
+ORDER BY num_tracks\
+;\
+\
+--Q6 Find composer who have composed tracks for more than one album and display the composer and the number of unique albums.\
+		--check for nullvalues\
+\
+SELECT \
+	composer,\
+ 	COUNT(DISTINCT album_id) AS num_unique_albums\
+FROM track\
+WHERE composer IS NOT NULL\
+GROUP BY composer\
+HAVING COUNT(DISTINCT album_id) > 1\
+ORDER BY num_unique_albums\
+;\
+\
+\
+-- Q7 Who (first_name, last_name) reports directly to Andrew Adams?\
+	-- table 1 employee table employee table 2 employee table boss\
+\
+\
+SELECT * FROM employee; -- check the data\
+\
+SELECT \
+	emp.first_name,\
+  	emp.last_name,\
+  	CONCAT(boss.first_name,' ',boss.last_name) AS boss_name\
+FROM employee emp\
+\
+	INNER JOIN employee boss\
+  	ON emp.reports_to = boss.employee_id\
+WHERE CONCAT(boss.first_name,' ',boss.last_name) = 'Andrew Adams'\
+;\
+\
+-- Q8 On which album title is the Song 'Boulevard Of Broken Dreams'?\
+\
+SELECT\
+	track.album_id,\
+ 	track.name,\
+ 	album.title\
+FROM album\
+\
+JOIN track\
+ON track.album_id = album.album_id\
+WHERE track.name LIKE 'Boulevard Of Broken Dreams'\
+;\
+\
+-- Q3 Which composers (not artist) do we have for Classical music?\
+\
+SELECT \
+	track.composer,\
+  	track.genre_id,\
+  	genre.name\
+FROM track\
+INNER JOIN genre\
+ON track.genre_id = genre.genre_id\
+WHERE genre.name LIKE 'Classical'\
+;\
+\
+-- Q9 Which artist recorded the song 'Losing My Religion'?\
+\
+SELECT\
+	art.name,\
+  	t.name,\
+\
+FROM\
+	artist AS art\
+JOIN \
+	album AS al\
+ON art.artist_id = al.artist_id\
+JOIN track AS t\
+ON al.album_id = t.album_id\
+WHERE t.name = 'Losing My Religion';\
+\
+\
+-- Q10 How many invoices with totals over 3 Dollar does each customer have(include customer name)? \
+	-- Show only those with 5 or more invoices.\
+			-- tabel 1 ; invoice\
+      -- table 2 ; customer\
+      --where invoice.total > 3 AND\
+      --count ( invoice_id) > 5\
+\
+SELECT\
+	customer.first_name,\
+  	customer.last_name,\
+  	COUNT(invoice.invoice_id) AS total_nr_invoice\
+FROM customer\
+INNER JOIN invoice\
+ON customer.customer_id = invoice.customer_id\
+WHERE invoice.total > 3\
+GROUP BY customer.customer_id\
+HAVING COUNT(invoice.invoice_id) >=5\
+;\
+\
+SELECT\
+	c.first_name,\
+  	c.last_name,\
+  	COUNT(i.invoice_id) AS total_nr_invoice\
+FROM customer c\
+INNER JOIN invoice i\
+ON c.customer_id = i.customer_id\
+WHERE i.total > 3\
+GROUP BY c.customer_id\
+HAVING COUNT(i.invoice_id) >=5\
+;\
+\
+\
+-- Q11 Show the Ids of customers that ordered less than 38 Songs\
+\
+SELECT\
+\
+	invoice.customer_id,\
+	SUM(invoice_line.quantity)  AS total_songs_bought\
+\
+FROM invoice\
+JOIN invoice_line ON invoice.invoice_id = invoice_line.invoice_id\
+GROUP BY invoice.customer_id\
+HAVING SUM(invoice_line.quantity) < 38\
+;\
+\
+-- show the name and last name as well but show all data\
+\
+SELECT\
+\
+	invoice.customer_id,\
+  	customer.first_name,\
+	SUM(invoice_line.quantity) AS total_songs_bought\
+\
+FROM invoice\
+JOIN invoice_line ON invoice.invoice_id = invoice_line.invoice_id\
+JOIN customer ON customer.customer_id = invoice.customer_id\
+GROUP BY invoice.customer_id, customer.first_name\
+order by SUM(invoice_line.quantity) DESC\
+;\
+\
+-- Q12 Which artists have at least 20 Rock Songs in our track table?\
+		-- table 1 - artist name, artist_id Pk\
+    -- table 2 - album.artist_id fk\
+    -- table 3 - genre-id pk , name\
+    -- table 4 track.ge\
+\
+SELECT\
+	artist.name,\
+  	genre.name,\
+ 	Count(track.track_id) AS no_of_songs\
+FROM artist\
+JOIN album ON artist.artist_id = album.album_id\
+JOIN track on album.album_id = track.album_id\
+JOIN genre ON track.genre_id = genre.genre_id\
+WHERE genre.name = 'Rock'\
+GROUP BY genre.name, artist.name\
+HAVING Count(track.track_id) >=20\
+;\
+\
+-- Q13 Which employee (first_name, last_name) is responsible for the most customers?\
+\
+SELECT \
+* \
+from customer;\
+\
+SELECT \
+* \
+from employee;\
+\
+SELECT\
+	employee.first_name,\
+  	employee.last_name,\
+ 	 employee.employee_id,\
+	COUNT(customer.customer_id) AS nr_of_customers\
+FROM employee\
+JOIN customer ON employee.employee_id = customer.support_rep_id\
+GROUP BY employee.employee_id , employee.first_name, employee.last_name\
+ORDER BY nr_of_customers DESC\
+;\
+\
+-- Q14 Which songs (track_id, name) did Astrid Gruber order from us?\
+\
+SELECT\
+\
+	track.track_id,\
+  	track.name,\
+  	customer.first_name,\
+ 	 customer.last_name\
+FROM track\
+JOIN invoice_line ON track.track_id = invoice_line.track_id\
+JOIN invoice ON invoice_line.invoice_id = invoice.invoice_id\
+JOIN customer ON invoice.customer_id = customer.customer_id\
+WHERE customer.first_name = 'Astrid' AND customer.last_name = 'Gruber'\
+;\
+\
+}

@@ -1,0 +1,304 @@
+-- SELECT / DISTINCT / LIST COLUMS / ARITHMETIC FUNCTION (-,/,+,*)
+
+—SELECT
+
+SELECT
+	name,
+  composer,
+  unit_price
+FROM track
+;
+
+-- WHERE
+
+SELECT
+	name,
+  composer,
+  unit_price
+FROM 
+	track
+WHERE
+	unit_price > 1
+;
+
+-- ORDER BY
+
+SELECT
+	name,
+  composer,
+  unit_price
+FROM 
+	track
+WHERE
+	unit_price > 1
+ORDER BY 
+	name
+;
+
+-- DISTINCT
+
+SELECT
+	DISTINCT unit_price
+  FROM track
+;
+
+-- COMPARISON
+
+SELECT
+	unit_price,
+  name
+FROM track
+WHERE unit_price = 0.99 
+OR name = 'Exodus,Pt. 1'
+limit 10
+;
+
+-- not function
+
+SELECT
+	unit_price,
+  name
+FROM track
+WHERE NOT unit_price = 0.99 
+OR name = 'Exodus,Pt. 1'
+limit 10
+;
+
+-- not function with ! mark
+
+SELECT
+	unit_price,
+  name
+FROM track
+WHERE unit_price != 0.99 
+OR name = 'Exodus,Pt. 1'
+limit 10
+;
+
+-- logical operators : AND/OR / NOT / IN / BETWEEN
+
+SELECT
+	composer,
+  name
+FROM track
+WHERE name IN ('Balls to the Wall','Fast As a Shark','Restless and Wild')
+;
+
+SELECT
+  name
+FROM track
+WHERE name LIKE 'B%' OR name LIKE 'b%'
+;
+
+SELECT *
+FROM track
+LIMIT 5
+;
+
+-- Practice—
+
+-- Q1 Display the track name, album_id & composer using an alias for track name as 'Track_name'.
+
+SELECT
+	name AS Track_name,
+  album_id,
+  composer
+FROM track
+;
+
+-- Q2 Find distinct tracks with a unit price greater than  0.99$. Select the track name & unit price.
+
+SELECT DISTINCT
+	name,
+  unit_price
+FROM 
+	track
+WHERE
+  unit_price > 0.99
+  ;
+  
+-- Q3 Select tracks that have a duration between 4min and 5min. Select the name of tracks and duration(milliseconds).
+
+SELECT
+	name,
+  milliseconds /1000/60 AS duration
+FROM track
+WHERE milliseconds /1000/60
+BETWEEN 4 AND 5
+;
+
+-- Q4 List tracks that have a genre_id of either 1 or 2 and contains 'Rock' in track name. Select genre_id and name of the track.
+
+SELECT
+	genre_id,
+  name
+FROM track
+WHERE
+	(genre_id = 1  
+OR 
+	genre_id = 2)
+AND 
+	name LIKE '%Rock%'
+;
+
+-- Option 2
+
+SELECT
+	genre_id,
+  name
+FROM track
+WHERE
+	genre_id IN (1,2)
+AND 
+	name LIKE '%Rock%'
+;
+
+-- Q5 Find the tracks where the track name start with 'B' or ends with 'a'.
+
+SELECT *
+FROM
+	track
+WHERE
+	name LIKE 'B%a'
+;
+
+
+-- Q6 Find the track name where the track name has r at the third position.
+
+SELECT
+	name
+FROM
+	track
+WHERE
+	name LIKE '__r%'
+;
+
+-- Q7 Select tracks that do have 'Angus Young' as a composer.Select the name, composer and unit price column.
+
+SELECT * 
+FROM track
+ORDER BY bytes
+LIMIT 5
+;
+
+-- Q 8 Find tracks composed by 'AC/DC'
+
+SELECT *
+FROM 
+	track
+WHERE 
+	composer ='AC/DC'
+  ;
+  
+-- Q9 Find tracks composed by Angus Young, Malcom Young, Brian Johanson
+-- or "AC/DC". Order the results by duration milliseconds and limit top 5
+
+SELECT
+*
+FROM 
+	track
+WHERE 
+	composer IN ('Angus Young, Malcom Young, Brian Johanson','AC/DC')
+ORDER BY 
+	milliseconds DESC
+LIMIT 5
+;
+
+-- Q 10 Select track name, composer, unit_price and bytes where the unit price greater than 
+ -- or equal to $1 ort composed by 'AC/DC' and limit to top 2
+ 
+ SELECT
+	name,
+  composer,
+  unit_price,
+  bytes
+FROM 
+	track
+WHERE 
+	unit_price >= 1 OR composer ='AC/DC'
+ORDER BY 
+	bytes DESC
+LIMIT 2
+;
+
+-- Q11 Find all tracks where the album ID is 2 and the genre_ID is 1
+
+SELECT *
+FROM
+	track
+WHERE
+	album_id = 2
+AND 
+	genre_id = 1
+;
+
+-- Q12 Find tracks name that have the letter "F" at third position.
+
+SELECT name
+FROM track
+WHERE name LIKE '__F%'
+;
+
+-- Q13 Find tracks that do not have a composer specified. Select the name of the track and composer columns
+
+SELECT 
+	name,
+  composer
+FROM track
+WHERE composer ISNULL
+;
+
+-- Q14 Find tracks that have a duration greater than 5min and a unit price less than $1.
+
+SELECT *
+FROM
+	track
+WHERE
+	milliseconds/1000/60 > 5
+AND
+	unit_price < 1
+;
+
+-- Q15 Find track name and milliseconds as duration that have a duration greater than 5min AND do not have a composer specified.
+
+SELECT
+	name,
+  milliseconds AS duration
+FROM 
+	track
+WHERE
+	milliseconds/1000/60 > 5
+AND 
+  composer ISNULL
+;
+  
+
+-- Q16 Find track name, genre_id and unit_price that have a duration between 200,000 and 300,000 milliseconds or a unit price greater than $0.99, but exclude tracks with a genre_id of 1
+
+SELECT
+	name,
+  genre_id,
+  unit_price
+FROM 
+	track
+WHERE
+	(milliseconds BETWEEN 200000 AND 300000
+  OR
+  unit_price > 0.99)
+  AND
+  genre_id != 1;
+  
+-- Q17 Select the first 5 tracks composed by 'Angus Young, Malcolm Young, Brian Johnson', sorted by album ID in ascending order and then by track name in descending order.
+
+SELECT
+	*
+FROM 
+	track
+WHERE
+	composer = 'Angus Young, Malcolm Young, Brian Johnson'
+ORDER BY album_id ASC, name DESC
+LIMIT 5;
+
+
+
+
